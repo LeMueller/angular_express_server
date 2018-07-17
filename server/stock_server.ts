@@ -1,21 +1,38 @@
 import * as express from 'express';
+import { Server } from 'ws';
 
 const app = express();
 
 app.get('/', (request, response) => response.send('这里是首页'));
 
-app.get('/stock', (request, response) => {
+app.get('/api/stock', (request, response) => {
     response.json(stocks);
 });
 
-app.get('/stock/:id', (request, response) => {
+app.get('/api/stock/:id', (request, response) => {
     response.json(stocks.find((stock) => stock.id == request.params.id));
 });
 
 const server = app.listen(8080, 'localhost', () => {
     console.log('服务器已经启动，地址是http://localhost:8080');
-    
 });
+
+const wsServer = new Server({port: 8081});
+wsServer.on('connection', websocket => {
+
+    websocket.send('欢迎链接服务器');
+    websocket.on('message', message => {
+        console.log("接收到客户端发送的消息，内容是： " + message);
+    })
+});
+
+setInterval(() => {
+    if(wsServer.clients) {
+        wsServer.clients.forEach(client => {
+            client.send("这是定时推送的消息");
+        })
+    }
+}, 2000);
 
 
 export class Stock {
